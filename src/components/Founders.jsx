@@ -48,7 +48,7 @@ export default function Founders() {
                 <p className="font-body text-sm uppercase tracking-widest text-zinc-500 font-semibold">
                   {founder.title}
                 </p>
-                <div className="h-0 overflow-hidden opacity-0 group-hover:h-auto group-hover:opacity-100 group-hover:mt-4 transition-all duration-500 ease-out">
+                <div className="h-auto opacity-100 mt-4 lg:h-0 lg:opacity-0 lg:mt-0 lg:group-hover:h-auto lg:group-hover:opacity-100 lg:group-hover:mt-4 transition-all duration-500 ease-out">
                   <p className="text-zinc-400 font-body text-sm leading-relaxed">
                     {founder.desc}
                   </p>

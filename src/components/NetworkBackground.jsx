@@ -16,8 +16,10 @@ export default function NetworkBackground() {
     canvas.height = height;
 
     const particles = [];
-    const particleCount = Math.min(Math.floor(width * height / 15000), 100); 
-    const connectionDistance = 150;
+    const isMobile = width < 768;
+    // Dramatically reduce particle node density on mobile phones to save battery and guarantee 60fps
+    const particleCount = isMobile ? Math.floor(width * height / 25000) : Math.min(Math.floor(width * height / 15000), 100); 
+    const connectionDistance = isMobile ? 100 : 150;
     
     // Mouse interaction
     let mouse = { x: -1000, y: -1000, radius: 200 };

@@ -83,7 +83,7 @@ export default function CaseStudies() {
                     <p className="text-primary-dim font-headline font-bold uppercase tracking-wide text-sm">{item.metricDesc}</p>
                   </div>
                   
-                  <div className="space-y-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-black/40 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                  <div className="space-y-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-500 bg-black/40 backdrop-blur-md p-6 rounded-2xl border border-white/10">
                     <div>
                       <p className="text-zinc-500 text-xs uppercase tracking-widest font-bold mb-1">Problem</p>
                       <p className="text-zinc-300 text-sm">{item.problem}</p>
