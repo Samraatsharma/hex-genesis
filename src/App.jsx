@@ -9,6 +9,7 @@ import Founders from './components/Founders'
 import WhyChooseUs from './components/WhyChooseUs'
 import Contact from './components/Contact'
 import Footer from './components/Footer'
+import Background from './components/Background'
 import { MessageCircle } from 'lucide-react'
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
   return (
     <div className="w-full min-h-screen bg-background text-zinc-200 font-body relative overflow-x-hidden selection:bg-primary/30 selection:text-primary-dim">
       
+      <Background />
       <LayoutGroup>
         
         {/* Intro Overlay Background */}
@@ -61,7 +63,7 @@ function App() {
                 initial={{ scale: 0.9, opacity: 0, filter: "brightness(0.5)" }}
                 animate={{ scale: 1, opacity: 1, filter: "brightness(1) drop-shadow(0px 0px 40px rgba(255,83,87,0.8))" }}
                 exit={{ opacity: 1 }} // Do not destroy opacity on exit, let layoutId handle it
-                transition={{ duration: 1.2, ease: "easeOut" }}
+                transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
               />
             )}
           </AnimatePresence>
@@ -92,7 +94,7 @@ function App() {
             href="https://wa.me/1234567890" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="fixed bottom-8 right-8 z-50 w-14 h-14 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:scale-110 hover:shadow-emerald-500/50 transition-all duration-300 pointer-events-auto"
+            className="fixed bottom-8 right-8 z-50 w-14 h-14 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:scale-[1.03] hover:shadow-emerald-500/50 transition-all duration-500 pointer-events-auto"
           >
             <MessageCircle size={28} />
           </a>

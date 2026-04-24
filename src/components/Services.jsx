@@ -1,131 +1,192 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Video, Rocket, BrainCircuit, LineChart } from 'lucide-react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Html, Environment, Float, Sparkles } from '@react-three/drei';
+import * as THREE from 'three';
+import Reveal, { RevealItem } from './Reveal';
 
-const TiltCard = ({ children, className }) => {
-  const ref = useRef(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-
-  const handleMouseMove = (e) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+// 3D Exploding Core Implementation
+function ExplodingQuadrant({ index, position, explodedPosition, isExploded, title, desc, activePart, setActivePart }) {
+  const meshRef = useRef();
+  const vec = new THREE.Vector3();
+  const isHovered = activePart === index;
+  
+  useFrame((state, delta) => {
+    // Determine the position
+    const targetPos = isExploded ? explodedPosition : position;
+    meshRef.current.position.lerp(new THREE.Vector3(...targetPos), delta * 5);
     
-    const rotateYValue = ((mouseX / width) - 0.5) * 15; // Max 15 deg tilt
-    const rotateXValue = ((mouseY / height) - 0.5) * -15;
+    // Scale on hover
+    const targetScale = (isExploded && isHovered) ? 1.03 : 1;
+    meshRef.current.scale.lerp(vec.set(targetScale, targetScale, targetScale), delta * 5);
+    
+    // Slight separate rotation
+    if (isExploded) {
+      meshRef.current.rotation.x += delta * 0.1;
+      meshRef.current.rotation.y += delta * 0.15;
+    } else {
+      // Return to baseline rotation quickly
+      meshRef.current.rotation.x = THREE.MathUtils.damp(meshRef.current.rotation.x, 0, 4, delta);
+      meshRef.current.rotation.y = THREE.MathUtils.damp(meshRef.current.rotation.y, 0, 4, delta);
+    }
+  });
 
-    setRotateX(rotateXValue);
-    setRotateY(rotateYValue);
-  };
-
-  const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
-  };
+  // Minimal aesthetic: Dark grey cube, white/red minimal glow on hover
+  const glowColor = isHovered ? "#FF5357" : "#ffffff";
+  const emissiveIntensity = isExploded && isHovered ? 0.3 : 0.05;
 
   return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      animate={{ rotateX, rotateY, transformPerspective: 1000 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
-      whileHover={{ scale: 1.02 }}
-      className={`relative ${className} preserve-3d`}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-2xl z-0 pointer-events-none"></div>
-      {children}
-    </motion.div>
+    <group>
+      <mesh 
+        ref={meshRef} 
+        position={position}
+        onPointerOver={(e) => { e.stopPropagation(); if(isExploded) setActivePart(index); }}
+        onPointerOut={(e) => { e.stopPropagation(); setActivePart(null); }}
+      >
+         <boxGeometry args={[1, 1, 1]} />
+         <meshStandardMaterial 
+            color="#111111" 
+            roughness={0.1} 
+            metalness={0.9} 
+            emissive={glowColor} 
+            emissiveIntensity={emissiveIntensity} 
+         />
+         {/* Subtle wireframe glow edge */}
+         <lineSegments>
+            <edgesGeometry args={[new THREE.BoxGeometry(1, 1, 1)]} />
+            <lineBasicMaterial color={isHovered ? "#FF5357" : "#333333"} linewidth={2} transparent opacity={isExploded ? 0.8 : 0.3} />
+         </lineSegments>
+      </mesh>
+      
+      {isExploded && (
+        <Html position={explodedPosition} center distanceFactor={18} className={`pointer-events-none transition-all duration-500 ${isHovered ? 'opacity-100 scale-100 z-50' : 'opacity-40 scale-95 z-10'}`}>
+          <div className="w-56 bg-zinc-950/80 backdrop-blur-xl border border-white/10 p-5 rounded-xl shadow-2xl pointer-events-auto group">
+             <div className="flex items-center gap-3 mb-2">
+               <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${isHovered ? 'bg-primary shadow-[0_0_10px_rgba(255,83,87,1)]' : 'bg-white/20'}`}></div>
+               <h4 className="text-white font-headline text-lg font-bold leading-tight uppercase tracking-wide text-[10px]">{title}</h4>
+             </div>
+             <p className="text-zinc-400 font-body text-xs leading-relaxed">{desc}</p>
+          </div>
+        </Html>
+      )}
+    </group>
   );
-};
+}
+
+function DarkCoreScene({ services }) {
+  const [isExploded, setIsExploded] = useState(false);
+  const [activePart, setActivePart] = useState(null);
+  const groupRef = useRef();
+
+  useFrame((state, delta) => {
+    // Clean, slow rotation for the entire group
+    if (!isExploded) {
+      groupRef.current.rotation.y += delta * 0.15;
+      groupRef.current.rotation.x += delta * 0.1;
+    } else {
+      groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, 0, 3, delta);
+      groupRef.current.rotation.x = THREE.MathUtils.damp(groupRef.current.rotation.x, 0, 3, delta);
+    }
+  });
+
+  // Base positions form a 2x2 cube matrix. Exploded positions expand outward cleanly along X/Y.
+  const parts = useMemo(() => [
+    { pos: [-0.55, 0.55, 0], exp: [-3.5, 2, 0], ...services[0] }, // Top-Left
+    { pos: [0.55, 0.55, 0], exp: [3.5, 2, 0], ...services[1] },  // Top-Right
+    { pos: [-0.55, -0.55, 0], exp: [-3.5, -2, 0], ...services[2] }, // Bottom-Left
+    { pos: [0.55, -0.55, 0], exp: [3.5, -2, 0], ...services[3] }, // Bottom-Right
+  ], [services]);
+
+  return (
+    <>
+      <ambientLight intensity={0.2} />
+      <directionalLight position={[10, 10, 5]} intensity={1.5} color="#ffffff" />
+      <directionalLight position={[-10, -10, -5]} intensity={0.5} color="#FF5357" />
+      <Environment preset="city" />
+      
+      <Float speed={1.5} rotationIntensity={0.2} floatIntensity={1}>
+        <group 
+          onPointerOver={() => setIsExploded(true)} 
+          onPointerOut={() => setIsExploded(false)}
+        >
+          {/* Hitbox bounding volume */}
+          <mesh visible={false}>
+            <boxGeometry args={[10, 8, 4]} />
+            <meshBasicMaterial transparent opacity={0} />
+          </mesh>
+
+          <group ref={groupRef}>
+            {parts.map((part, i) => (
+              <ExplodingQuadrant 
+                key={i}
+                index={i}
+                position={part.pos}
+                explodedPosition={part.exp}
+                isExploded={isExploded}
+                title={part.title}
+                desc={part.desc}
+                activePart={activePart}
+                setActivePart={setActivePart}
+              />
+            ))}
+          </group>
+        </group>
+      </Float>
+      
+      {/* Very stark, subtle background atmosphere instead of massive sparkles */}
+      <Sparkles count={30} scale={12} size={0.5} speed={0.2} opacity={0.06} color="#ffffff" />
+    </>
+  );
+}
 
 export default function Services() {
   const services = [
     {
       title: "High-Retention Editing",
-      desc: "Psychologically engineered pacing and visual hooks designed to maximize AVD.",
-      icon: <Video size={32} className="text-primary mb-6" />,
-      colSpan: "lg:col-span-1 md:col-span-1",
-      delay: 0.1
+      desc: "Psychologically engineered pacing utilizing pattern interrupts."
     },
     {
-      title: "Viral Reels Architecture",
-      desc: "Short-form content systems engineered for the infinite scroll, optimizing for shares and watch time.",
-      icon: <Rocket size={32} className="text-blue-400 mb-6" />,
-      colSpan: "lg:col-span-1 md:col-span-1",
-      delay: 0.2
+      title: "Viral Architecture",
+      desc: "Systems engineered for the infinite scroll, maximizing algorithmic reach."
     },
     {
       title: "AI Ad Generation",
-      desc: "Hyper-personalized video advertising at scale, utilizing advanced generative models for rapid creative testing.",
-      icon: <BrainCircuit size={32} className="text-purple-400 mb-6" />,
-      colSpan: "lg:col-span-1 md:col-span-2",
-      delay: 0.3
+      desc: "Hyper-personalized structural testing using advanced generative models."
     },
     {
       title: "Content Strategy",
-      desc: "Data-driven roadmaps to position your brand algorithmically above competitors.",
-      icon: <LineChart size={32} className="text-emerald-400 mb-6" />,
-      colSpan: "lg:col-span-1 md:col-span-2",
-      delay: 0.4
+      desc: "Data-driven roadmaps to position your brand purely above competitors."
     }
   ];
 
   return (
-    <section id="services" className="py-32 bg-background relative z-10">
-      <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-12 gap-8 mb-20 items-end">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="lg:col-span-8"
-          >
-            <h2 className="font-headline text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-white">
-              Architectural Video Solutions
-            </h2>
-            <p className="text-zinc-400 text-lg md:text-xl max-w-2xl font-body leading-relaxed">
-              We don't just edit. We build retention engines designed for algorithmic dominance using advanced psychology and AI workflows.
-            </p>
-          </motion.div>
-        </div>
+    <section id="services" className="py-24 bg-transparent relative z-10 overflow-hidden">
+      <div className="container mx-auto px-6 relative z-20">
+        
+        <Reveal className="flex flex-col items-center text-center mb-12">
+          <p className="font-body text-[10px] uppercase tracking-[0.4em] font-bold text-primary mb-4">Core Competency</p>
+          <h2 className="font-headline text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-white text-center">
+            Systematic Mechanics
+          </h2>
+          <p className="text-zinc-400 text-lg md:text-xl max-w-2xl font-body leading-relaxed mx-auto">
+            Hover to inspect our structural pillars. We don't just edit; we engineer retention systems.
+          </p>
+        </Reveal>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {services.map((service, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6, delay: service.delay }}
-              className={service.colSpan}
-            >
-              <TiltCard className="bg-zinc-900/50 border border-white/5 rounded-2xl p-8 h-[350px] flex flex-col justify-end group shadow-2xl overflow-hidden cursor-crosshair">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
-                <div className="absolute -inset-[100%] bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:animate-[shine_1.5s_ease-in-out] pointer-events-none z-20 transform -skew-x-12"></div>
-                
-                <div className="relative z-30 transform-gpu translate-z-10 transition-transform duration-300 group-hover:-translate-y-4">
-                  {service.icon}
-                  <h3 className="font-headline text-2xl font-bold mb-3 text-white group-hover:text-primary-dim transition-colors">{service.title}</h3>
-                  <p className="text-zinc-400 text-sm font-body leading-relaxed">{service.desc}</p>
-                </div>
-              </TiltCard>
-            </motion.div>
-          ))}
-        </div>
+        {/* 3D Exploding Core Area */}
+        <Reveal delay={0.2} className="w-full h-[600px] relative mb-12 border border-white/5 rounded-3xl bg-black/20 backdrop-blur-sm overflow-hidden">
+           <div className="absolute top-6 left-6 z-10 flex items-center gap-3 opacity-50">
+             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+             <span className="text-white text-[9px] font-body uppercase tracking-[0.2em]">Interactive Object • Standby</span>
+           </div>
+           
+           <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+             <DarkCoreScene services={services} />
+           </Canvas>
+        </Reveal>
+
       </div>
-      <style>{`
-        @keyframes shine {
-          100% { left: 100%; top: 100%; }
-        }
-        .preserve-3d { transform-style: preserve-3d; }
-        .translate-z-10 { transform: translateZ(30px); }
-      `}</style>
     </section>
   );
 }

@@ -40,7 +40,7 @@ export default function Navbar({ isIntro }) {
                   src="/logo.png" 
                   alt="Hexa Genisys" 
                   className="absolute left-0 top-0 h-full w-auto object-contain pl-2"
-                  transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
                 />
               )}
             </AnimatePresence>
@@ -62,7 +62,7 @@ export default function Navbar({ isIntro }) {
 
           {/* CTA: Right */}
           <div className="hidden md:flex justify-end w-32 md:w-48">
-            <button className="bg-gradient-primary text-black font-body uppercase tracking-widest text-[0.7rem] font-bold px-6 py-3 rounded-full hover:shadow-[0_0_20px_rgba(255,83,87,0.4)] hover:scale-105 transition-all duration-300">
+            <button className="bg-gradient-primary text-black font-body uppercase tracking-widest text-[0.7rem] font-bold px-6 py-3 rounded-full hover:shadow-[0_0_20px_rgba(255,83,87,0.4)] hover:scale-[1.03] transition-all duration-500">
               Book Call
             </button>
           </div>

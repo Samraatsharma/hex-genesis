@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import Reveal from './Reveal';
 
 export default function Contact() {
   return (
@@ -7,11 +7,7 @@ export default function Contact() {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[200px] pointer-events-none"></div>
 
       <div className="container mx-auto px-6 relative z-10 max-w-5xl">
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+        <Reveal 
           className="bg-zinc-900/40 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-16 text-center lg:text-left grid lg:grid-cols-2 gap-16 shadow-2xl"
         >
           
@@ -77,7 +73,7 @@ export default function Contact() {
             </button>
           </form>
 
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );
