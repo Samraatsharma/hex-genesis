@@ -14,10 +14,8 @@ import { MessageCircle } from 'lucide-react'
 
 function App() {
   const [isIntro, setIsIntro] = useState(false)
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const hasSeen = sessionStorage.getItem('hasSeenIntro')
     if (!hasSeen) {
       setIsIntro(true)
@@ -31,7 +29,7 @@ function App() {
     }
   }, [])
 
-  if (!mounted) return null; // Avoid SSR flashes if any
+
 
   return (
     <div className="w-full min-h-screen bg-background text-zinc-200 font-body relative overflow-x-hidden selection:bg-primary/30 selection:text-primary-dim">

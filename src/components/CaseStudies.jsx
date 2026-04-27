@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Reveal from './Reveal';
@@ -37,7 +37,6 @@ export default function CaseStudies() {
   const handlePrev = () => setActiveIndex((prev) => Math.max(prev - 1, 0));
 
   const getCardStyle = (index) => {
-    const isActive = index === activeIndex;
     const diff = index - activeIndex; // -1 for left, 1 for right
     const absDiff = Math.abs(diff);
 
